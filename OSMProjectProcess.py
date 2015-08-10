@@ -1,9 +1,4 @@
-Traceback (most recent call last):
-    File "OSMProjectProcess.py", line 93, in <module>
-    process_map(file_in,file_out)
-        File "OSMProjectProcess.py", line 75, in process_map
-if el['address']['street']:
-KeyError: 'street'import xml.etree.cElementTree as ET
+import xml.etree.cElementTree as ET
 import pprint
 import re
 import codecs
@@ -76,9 +71,9 @@ def process_map(file_in,file_out,pretty=False):
     with codecs.open(file_out, "w") as fo:
     		for _, element in ET.iterparse(file_in):
     			el = shape_element(element)
-    			#if el:
-    			#	if el['address']['street']:
-    			#		pass
+    			if el:
+    				if 'street' in el['address']:
+    					print el['address']['street']
     					#$print el['address']['street']
     			#		print el['address']
     				#['street']
