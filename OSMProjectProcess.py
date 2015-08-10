@@ -1,4 +1,9 @@
-import xml.etree.cElementTree as ET
+Traceback (most recent call last):
+    File "OSMProjectProcess.py", line 93, in <module>
+    process_map(file_in,file_out)
+        File "OSMProjectProcess.py", line 75, in process_map
+if el['address']['street']:
+KeyError: 'street'import xml.etree.cElementTree as ET
 import pprint
 import re
 import codecs
@@ -54,12 +59,12 @@ def shape_element(element):
 		for tag in element.iter('tag'):
 			if re.search('addr:',tag.attrib['k']):
 				address[tag.attrib['k'][5:]]=tag.attrib['v']
-           	elif re.search(problemchars,tag.attrib['k']): 
-            	break                        
-           	elif re.search(street_part, tag.attrib['k']): 
-               	break
-           	elif re.search(lower_colon, tag.attrib['k']):
-                node[tag.attrib['k']] = tag.attrib['v']   
+           	#elif re.search(problemchars,tag.attrib['k']): 
+            #	break                        
+           	#elif re.search(street_part, tag.attrib['k']): 
+            #   	break
+           	#elif re.search(lower_colon, tag.attrib['k']):
+            #    node[tag.attrib['k']] = tag.attrib['v']   
 		node['address']=address
 		return node
 	else:
@@ -71,9 +76,14 @@ def process_map(file_in,file_out,pretty=False):
     with codecs.open(file_out, "w") as fo:
     		for _, element in ET.iterparse(file_in):
     			el = shape_element(element)
-    			if el:
-    				if len(el['address']) != 0: #Fix Street name here
-    					print el
+    			#if el:
+    			#	if el['address']['street']:
+    			#		pass
+    					#$print el['address']['street']
+    			#		print el['address']
+    				#['street']
+    				#if len(el['address']) != 0: #Fix Street name here
+    				#	print el
     					#for k,v in el['address'].iteritems():
     					#	if k == 'street':
     					#		print k,v
