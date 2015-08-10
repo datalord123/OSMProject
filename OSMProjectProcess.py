@@ -10,6 +10,26 @@ script, file_in, file_out = argv
 
 CREATED = [ "version", "changeset", "timestamp", "user", "uid"]
 
+street_type_re = re.compile(r'\b\S+\.?$', re.IGNORECASE)
+lower = re.compile(r'^([a-z]|_)*$')
+lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
+problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
+
+mapping = { "St": "Street",
+            "St.": "Street",
+            'Rd': 'Road',
+            'Rd.': 'Road',
+            'Ave': 'Avenue',
+            'Ave.': 'Avenue',
+            'Ln':'Lane',
+            'Ln.':'Lane',
+            'Dr':'Drive',
+            'Dr.':'Drive',
+            'Pl':'Place',
+            'Pl.':'Place',
+            'Pkwy':'Parkway'
+            }
+
 def shape_element(element):
 	node = {}
 	pos=[]
@@ -34,11 +54,13 @@ def shape_element(element):
 		for tag in element.iter('tag'):
 			if re.search('addr:',tag.attrib['k']):
 				address[tag.attrib['k'][5:]]=tag.attrib['v']
-			#if re.search(addresspart,tag.attrib['k']): #Assign Address
-			#	address[tag.attrib['k'][5:]]=tag.attrib['v']
-				#print tag.attrib['k'],tag.attrib['v']
-		print address
-		#node['address']=address
+           	elif re.search(problemchars,tag.attrib['k']): 
+            	break                        
+           	elif re.search(street_part, tag.attrib['k']): 
+               	break
+           	elif re.search(lower_colon, tag.attrib['k']):
+                node[tag.attrib['k']] = tag.attrib['v']   
+		node['address']=address
 		return node
 	else:
 		return None		
@@ -49,8 +71,13 @@ def process_map(file_in,file_out,pretty=False):
     with codecs.open(file_out, "w") as fo:
     		for _, element in ET.iterparse(file_in):
     			el = shape_element(element)
-    			#if el:
-    			#	print el
+    			if el:
+    				if len(el['address']) != 0: #Fix Street name here
+    					print el
+    					#for k,v in el['address'].iteritems():
+    					#	if k == 'street':
+    					#		print k,v
+    				#	print el
     			#	data.append(el)
     			#	if pretty:
     			#		fo.write(json.dumps(el,indent=2)+'\n')
@@ -60,3 +87,14 @@ def process_map(file_in,file_out,pretty=False):
 
             
 process_map(file_in,file_out)   
+
+'''
+                
+'''
+'''
+def update_name(name, mapping):
+    for key,value in mapping.iteritems():
+        if key in name:
+            name = re.sub(street_type_re,value,name)
+    return name
+'''    
