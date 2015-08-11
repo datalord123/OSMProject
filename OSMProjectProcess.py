@@ -73,11 +73,12 @@ def shape_element(element):
 def update_name(name, mapping):
 	for key,value in mapping.iteritems():
 		if key in name:
-			name = re.sub(street_type_re,value,name)
+			newname = re.sub(street_type_re,value,name)
+			print name,'==>',newname
 	return name
 
 #Udacity Coach: here is a simple example: test = "Compton St 37"
-#Udacity Coach: m = re.search('(.*)(st)(.*)', test, re.IGNORECASE)
+#Udacity Coach: m = re.search('(.*)(key)(.*)', test, re.IGNORECASE)
 #Udacity Coach: then, you can retrieve elements of the string using m.group(1)
 #Udacity Coach: m.group(2)
 
@@ -91,7 +92,7 @@ def process_map(file_in,file_out,pretty=False):
     				if 'street' in el['address']:    					
     					old_street = el['address']['street']
     					new_street = update_name(old_street,mapping)
-    					print old_street, '==>', new_street
+    					#print old_street, '==>', new_street
     					#$print el['address']['street']
     			#		print el['address']
 
@@ -101,13 +102,6 @@ def process_map(file_in,file_out,pretty=False):
     			#	else:
     			#		fo.write(json.dumps(el)+'\n')
     return data						
-
-#def update_name(name, mapping):
-#    for key,value in mapping.iteritems():
-#        if key in name:
-#            name = re.sub(street_type_re,value,name)
-#    return name
-
             
 process_map(file_in,file_out)   
  
