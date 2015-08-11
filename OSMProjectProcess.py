@@ -9,7 +9,6 @@ script, file_in, file_out = argv
 
 CREATED = [ "version", "changeset", "timestamp", "user", "uid"]
 
-street_type_re = re.compile(r'\b\S+\.?$', re.IGNORECASE)
 lower = re.compile(r'^([a-z]|_)*$')
 lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
 problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
@@ -52,8 +51,8 @@ def shape_element(element):
         	pos.append(float(element.attrib['lon']))		
 		node['pos']=pos		
 		address = {}		
-		address_part = re.compile(r'^addr:(\w+|_)*$') #lower case only, fix to also include upper
-		street_part = re.compile(r'^addr:(\w+)*:(\w+|_)*$') #lower case only, fix to also include upper
+		address_part = re.compile(r'^addr:(\w+|_)*$')
+		street_part = re.compile(r'^addr:(\w+)*:(\w+|_)*$') 
 		
 		for tag in element.iter('tag'):
 			if re.search(problemchars,tag.attrib['k']): #Ignore keys that include problem Characters
@@ -73,14 +72,8 @@ def shape_element(element):
 def update_name(name, mapping):
 	for key,value in mapping.iteritems():
 		if key in name:
-			newname = re.sub(street_type_re,value,name)
-			print name,'==>',newname
+			name = re.sub(r'\b'+key+r'\b',value,name)
 	return name
-
-#Udacity Coach: here is a simple example: test = "Compton St 37"
-#Udacity Coach: m = re.search('(.*)(key)(.*)', test, re.IGNORECASE)
-#Udacity Coach: then, you can retrieve elements of the string using m.group(1)
-#Udacity Coach: m.group(2)
 
 def process_map(file_in,file_out,pretty=False):
     file_out = "{0}.json".format(file_out)
@@ -91,16 +84,13 @@ def process_map(file_in,file_out,pretty=False):
     			if el:
     				if 'street' in el['address']:    					
     					old_street = el['address']['street']
-    					new_street = update_name(old_street,mapping)
-    					#print old_street, '==>', new_street
-    					#$print el['address']['street']
-    			#		print el['address']
-
-    			#	data.append(el)
-    			#	if pretty:
-    			#		fo.write(json.dumps(el,indent=2)+'\n')
-    			#	else:
-    			#		fo.write(json.dumps(el)+'\n')
+    					el['address'] = update_name(old_street,mapping) #Explain abbreviation issue
+    					#print old_street, '==>', el['address'] 
+    				data.append(el.copy())
+    				if pretty:
+    					fo.write(json.dumps(el,indent=2)+'\n')
+    				else:
+    					fo.write(json.dumps(el)+'\n')
     return data						
             
 process_map(file_in,file_out)   
