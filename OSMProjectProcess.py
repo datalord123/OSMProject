@@ -27,8 +27,16 @@ mapping = { "St": "Street",
             'Pl.':'Place',
             'Pkwy':'Parkway',
             'Blvd.': 'Boulevard',
-            'Blvd': 'Boulevard'
-            }
+            'Blvd': 'Boulevard',
+            'W':'West',
+            'W.':'West',
+            'N':'North',
+            'N.':'North',
+            'E.':'East',
+            'E':'East',
+            'S':'South',
+            'S.':'South'
+                        }
 
 expected = ["Street", "Avenue", "Boulevard", "Drive", "Court", "Place", "Square", "Lane", "Road", 
             "Trail", "Parkway", "Commons"]
@@ -59,7 +67,6 @@ def shape_element(element):
 				continue
 			elif re.search(address_part,tag.attrib['k']): #if addr: in 'k' value then add to 'address' dictionary
 				address[tag.attrib['k'][5:]]=tag.attrib['v']		
-				#print tag.attrib['v']
 			elif re.search(street_part,tag.attrib['k']): #ignore if addr: and second : exists
 				continue
 			else: #if k doesn't start with addr but contain : process like any other tag
@@ -69,12 +76,20 @@ def shape_element(element):
 	else:
 		return None		
 
-def update_name(name, mapping):
+def update_street(name, mapping):
 	for key,value in mapping.iteritems():
 		if key in name:
 			name = re.sub(r'\b'+key+r'\b',value,name)
 	return name
 
+def update_postcode(code):
+	if len(code)!=5:
+		#print code
+		new = re.compile('\d+$')
+		m = re.search(new,code)
+		if m:
+			code = m.group()
+	return code
 def process_map(file_in,file_out,pretty=False):
     file_out = "{0}.json".format(file_out)
     data = []
@@ -84,8 +99,11 @@ def process_map(file_in,file_out,pretty=False):
     			if el:
     				if 'street' in el['address']:    					
     					old_street = el['address']['street']
-    					el['address'] = update_name(old_street,mapping) #Explain abbreviation issue
-    					#print old_street, '==>', el['address'] 
+    					el['address']['street'] = update_street(old_street,mapping) #Explain abbreviation issue
+    					#print old_street, '==>', el['address']['street']     				
+    				if 'postcode' in el['address']:
+    					old_postcode= el['address']['postcode']
+    					el['address']['postcode'] = update_postcode(old_postcode)
     				data.append(el.copy())
     				if pretty:
     					fo.write(json.dumps(el,indent=2)+'\n')
