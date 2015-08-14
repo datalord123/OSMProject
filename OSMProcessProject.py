@@ -1,0 +1,133 @@
+import xml.etree.cElementTree as ET
+import pprint
+import re
+import codecs
+import json
+from sys import argv
+
+
+#Tweak this so Templates are identical. Do this by creating an other dictionary and pumping in extra's into there.
+#mongoimport --db cities --collection RedColumbus --file Reduced_columbus_ohio.osm.json
+#reduced file to submit must be 1-10MB no more
+
+
+script, file_in, file_out = argv
+
+CREATED = [ "version", "changeset", "timestamp", "user", "uid"]
+
+lower = re.compile(r'^([a-z]|_)*$')
+lower_colon = re.compile(r'^([a-z]|_)*:([a-z]|_)*$')
+problemchars = re.compile(r'[=\+/&<>;\'"\?%#$@\,\. \t\r\n]')
+
+#Mapping Dictionary
+mapping = { "St": "Street",
+            "St.": "Street",
+            'Rd': 'Road',
+            'Rd.': 'Road',
+            'Ave': 'Avenue',
+            'Ave.': 'Avenue',
+            'Ln':'Lane',
+            'Ln.':'Lane',
+            'Dr':'Drive',
+            'Dr.':'Drive',
+            'Pl':'Place',
+            'Pl.':'Place',
+            'Pkwy':'Parkway',
+            'Blvd.': 'Boulevard',
+            'Blvd': 'Boulevard',
+            'W':'West',
+            'W.':'West',
+            'N':'North',
+            'N.':'North',
+            'E.':'East',
+            'E':'East',
+            'S':'South',
+            'S.':'South'
+                        }
+
+expected = ["Street", "Avenue", "Boulevard", "Drive", "Court", "Place", "Square", "Lane", "Road", 
+            "Trail", "Parkway", "Commons"]
+def shape_element(element):
+	node = {}
+	pos=[]
+	if element.tag == "node" or element.tag == "way":
+		if 'id' in element.attrib:
+			node['id'] = element.attrib['id']
+		node['type'] = element.tag
+		if 'visible' in element.attrib:
+			node['visible'] = element.attrib['visible']
+		created = {}
+		for i in CREATED:
+			created[i]=element.attrib[i]
+		node['created']=created
+		if 'lat' in element.attrib:
+			pos.append(float(element.attrib['lat']))
+        if 'lon' in element.attrib:  
+        	pos.append(float(element.attrib['lon']))		
+		node['pos']=pos		
+		address = {}
+		address_part = re.compile(r'^addr:(\w+|_)*$')
+		street_part = re.compile(r'^addr:(\w+)*:(\w+|_)*$') 
+		
+		for tag in element.iter('tag'):
+			if re.search(problemchars,tag.attrib['k']): #Ignore keys that include problem Characters
+				continue
+			elif re.search(address_part,tag.attrib['k']): #if addr: in 'k' value then add to 'address' dictionary
+				address[tag.attrib['k'][5:]]=tag.attrib['v']		
+			elif re.search(street_part,tag.attrib['k']): #ignore if addr: and second : exists
+				continue
+			else: #if k doesn't start with addr but contain : process like any other tag
+				node[tag.attrib['k']]=tag.attrib['v']
+		node['address']=address
+		return node
+	else:
+		return None		
+
+def update_street(name, mapping):
+	for key,value in mapping.iteritems():
+		if key in name:
+			name = re.sub(r'\b'+key+r'\b',value,name)
+	return name
+
+def update_postcode(code):
+	if len(code)!=5:
+		#print code
+		new = re.compile('\d+$')
+		m = re.search(new,code)
+		if m:
+			code = m.group()
+	return code
+
+def update_state(code): #FIX
+	new_code = 'OH'
+	if len(code)>2 and re.match('^Oh.*',code):
+		#print code,'==>',new_code
+		code = new_code
+	return code
+		
+def process_map(file_in,file_out,pretty=False):
+    file_out = "{0}.json".format(file_out)
+    data = []
+    with codecs.open(file_out, "w") as fo:
+    		for _, element in ET.iterparse(file_in):
+    			el = shape_element(element)
+    			if el:
+    				if 'street' in el['address']:    					
+    					old_street = el['address']['street']
+    					el['address']['street'] = update_street(old_street,mapping) #Update Street Names
+    					#print old_street, '==>', el['address']['street']     				
+    				if 'postcode' in el['address']:
+    					old_postcode= el['address']['postcode']
+    					el['address']['postcode'] = update_postcode(old_postcode)  #Update Postal Codes
+    				if 'state' in el['address']:
+    					old_state= el['address']['state']
+    					el['address']['state'] = update_state(old_state) #Update State Name
+    				data.append(el.copy())
+    				if pretty:
+    					fo.write(json.dumps(el,indent=2)+'\n')
+    				else:
+    					fo.write(json.dumps(el)+'\n')
+    return data						
+            
+process_map(file_in,file_out)   
+ 
