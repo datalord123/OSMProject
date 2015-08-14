@@ -1,1 +1,1 @@
-Link to Wrangled Map: Êhttps://mapzen.com/data/metro-extractsText file with links: NA
+Link to Wrangled Map: Êhttps://mapzen.com/data/metro-extractsI chose to use the Columbus Ohio Dataset because it is the city that the company I work for is based out of. I had hoped that I would be able to translate what I learned in this project to something valuable I could contribute to my jobText file with links: NA
